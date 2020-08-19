@@ -624,7 +624,6 @@ contract LPTokenWrapper {
 contract y3dPool is LPTokenWrapper, IRewardDistributionRecipient {
     IERC20 public y3d;
     uint256 public DURATION = 7 days;
-
     uint256 public starttime = 1597795200;
     uint256 public periodFinish = 0;
     uint256 public rewardRate = 0;
@@ -638,10 +637,13 @@ contract y3dPool is LPTokenWrapper, IRewardDistributionRecipient {
     event Withdrawn(address indexed user, uint256 amount);
     event RewardPaid(address indexed user, uint256 reward);
 
-    constructor(address _y3d, address _lptoken) public {
+    constructor(address _y3d, address _lptoken, uint _duration, uint _starttime) public {
         y3d  = IERC20(_y3d);
         lpt = IERC20(_lptoken);
+        DURATION = _duration;
+        starttime = _starttime;
     }
+
 
     modifier checkStart() {
         require(block.timestamp >= starttime,"not start");
