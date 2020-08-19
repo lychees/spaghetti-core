@@ -1,5 +1,17 @@
 pragma solidity ^0.5.0;
 
+/*
+ ___    ___ ________  ________     
+ |\  \  /  /|\_____  \|\   ___ \    
+ \ \  \/  / \|____|\ /\ \  \_|\ \   
+  \ \    / /      \|\  \ \  \ \\ \  
+   \/  /  /      __\_\  \ \  \_\\ \ 
+ __/  / /       |\_______\ \_______\
+|\___/ /        \|_______|\|_______|
+\|___|/                             
+                                    */
+
+
 contract DSMath {
     function add(uint x, uint y) internal pure returns (uint z) {
         require((z = x + y) >= x, "ds-math-add-overflow");

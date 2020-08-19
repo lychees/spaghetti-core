@@ -600,6 +600,12 @@ contract LPTokenWrapper {
     uint256 private _totalSupply;
     mapping(address => uint256) private _balances;
 
+    uint256 public _profitPerShare; // x 1e18, monotonically increasing.
+    mapping(address => uint256) private _unrealized; // x 1e18
+    mapping(address => uint256) private _realized; // last paid _profitPerShare
+
+    event LPTPaid(address indexed user, uint256 profit);    
+
     function totalSupply() public view returns (uint256) {
         return _totalSupply;
     }
@@ -608,16 +614,46 @@ contract LPTokenWrapper {
         return _balances[account];
     }
 
-    function stake(uint256 amount) public {
+    function unrealizedProfit(address account) public view returns (uint256) {
+        return _unrealized[account].add(_balances[account].mul(_profitPerShare.sub(_realized[account])).div(1e18));
+    }    
+
+    function make_profit(uint256 amount) public returns (uint256) {
+        require (_totalSupply != 0, "no supply");
+        _profitPerShare.add(amount.mul(1e18).div(totalSupply()));
+    }
+
+    modifier update(address account) {
+        // Tells the contract that the buyer doesn't deserve dividends for the tokens before they owned them;
+        // really i know you think you do but you don't
+        if (account != address(0)) {
+            _unrealized[account] = unrealizedProfit(account);
+            _realized[account] = _profitPerShare;
+        }
+        _;
+    }    
+
+    function stake(uint256 amount) update(msg.sender) public {
         _totalSupply = _totalSupply.add(amount);
         _balances[msg.sender] = _balances[msg.sender].add(amount);
         lpt.safeTransferFrom(msg.sender, address(this), amount);
     }
 
-    function withdraw(uint256 amount) public {
+    function withdraw(uint256 amount) update(msg.sender) public {
         _totalSupply = _totalSupply.sub(amount);
         _balances[msg.sender] = _balances[msg.sender].sub(amount);
-        lpt.safeTransfer(msg.sender, amount);
+        uint256 tax = amount / 20;
+        lpt.safeTransfer(msg.sender, amount - tax);
+        make_profit(tax);        
+    }
+
+    function claim() update(msg.sender) public {
+        uint256 profit = _unrealized[msg.sender];
+        if (profit > 0) {
+            _unrealized[msg.sender] = 0;
+            lpt.safeTransfer(msg.sender, profit);
+            emit LPTPaid(msg.sender, profit);
+        }
     }
 }
 
@@ -632,10 +668,6 @@ contract y3dPool is LPTokenWrapper, IRewardDistributionRecipient {
     mapping(address => uint256) public userRewardPerTokenPaid;
     mapping(address => uint256) public rewards;
 
-    uint256 public rewardPerTokenStored_LP;
-    mapping(address => uint256) public userRewardPerTokenPaid_LP;
-    mapping(address => uint256) public rewards_LP;    
-
     event RewardAdded(uint256 reward);
     event Staked(address indexed user, uint256 amount);
     event Withdrawn(address indexed user, uint256 amount);
@@ -649,7 +681,7 @@ contract y3dPool is LPTokenWrapper, IRewardDistributionRecipient {
     }
 
     modifier checkStart() {
-        require(block.timestamp >= starttime,"not start");
+        require(block.timestamp >= starttime, "not start");
         _;
     }
 
@@ -659,17 +691,6 @@ contract y3dPool is LPTokenWrapper, IRewardDistributionRecipient {
         if (account != address(0)) {
             rewards[account] = earned(account);
             userRewardPerTokenPaid[account] = rewardPerTokenStored;
-        }
-        _;
-    }
-
-    modifier updateReward_LP(address account) {
-        // Tells the contract that the buyer doesn't deserve dividends for the tokens before they owned them;
-        // really i know you think you do but you don't
-        rewardPerTokenStored_LP = rewardPerToken_LP();
-        if (account != address(0)) {
-            rewards_LP[account] = earned_LP(account);
-            userRewardPerTokenPaid_LP[account] = rewardPerTokenStored_LP;
         }
         _;
     }
@@ -692,21 +713,6 @@ contract y3dPool is LPTokenWrapper, IRewardDistributionRecipient {
             );
     }
 
-
-    function make_profit(uint256 profit) internal view {
-        if (totalSupply() == 0) {
-            return;
-        }
-        rewardPerTokenStored_LP.add(
-            profit.mul(1e18)
-            .div(totalSupply())
-        );
-    }    
-
-    function rewardPerToken_LP() public view returns (uint256) {
-        return rewardPerTokenStored_LP;
-    }
-
     function earned(address account) public view returns (uint256) {
         return
             balanceOf(account)
@@ -715,22 +721,14 @@ contract y3dPool is LPTokenWrapper, IRewardDistributionRecipient {
                 .add(rewards[account]);
     }
 
-    function earned_LP(address account) public view returns (uint256) {
-        return
-            balanceOf(account)
-                .mul(rewardPerToken_LP().sub(userRewardPerTokenPaid_LP[account]))
-                .div(1e18)
-                .add(rewards_LP[account]);
-    }
-
     // stake visibility is public as overriding LPTokenWrapper's stake() function
-    function stake(uint256 amount) public updateReward(msg.sender) updateReward_LP(msg.sender) checkStart {
+    function stake(uint256 amount) public updateReward(msg.sender) checkStart {
         require(amount > 0, "Cannot stake 0");
         super.stake(amount);
         emit Staked(msg.sender, amount);
     }
 
-    function withdraw(uint256 amount) public updateReward(msg.sender) updateReward_LP(msg.sender) checkStart {
+    function withdraw(uint256 amount) public updateReward(msg.sender)checkStart {
         require(amount > 0, "Cannot withdraw 0");
         super.withdraw(amount);
         emit Withdrawn(msg.sender, amount);
@@ -749,15 +747,6 @@ contract y3dPool is LPTokenWrapper, IRewardDistributionRecipient {
             emit RewardPaid(msg.sender, reward);
         }
     }
-
-    function getReward_LP() public updateReward_LP(msg.sender) {
-        uint256 reward_LP = earned_LP(msg.sender);
-        if (reward_LP > 0) {
-            rewards_LP[msg.sender] = 0;
-            lpt.safeTransfer(msg.sender, reward_LP);
-            emit RewardPaid(msg.sender, reward_LP);
-        }
-    }    
 
     function notifyRewardAmount(uint256 reward)
         external
