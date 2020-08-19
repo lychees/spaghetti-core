@@ -693,7 +693,7 @@ contract y3dPool is LPTokenWrapper, IRewardDistributionRecipient {
     }
 
 
-    function make_profit(uint256 profit) internal {
+    function make_profit(uint256 profit) internal view {
         if (totalSupply() == 0) {
             return;
         }

@@ -27,7 +27,10 @@ contract y3dFactory {
 
     function initWETH() public {
         require(address(wethPool) == address(0), "Already initialized");
-        wethPool = new y3dPool(address(y3d), 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2, 7 days, now + 24 hours);
+//        wethPool = new y3dPool(address(y3d), 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2, 7 days, now + 24 hours);
+        wethPool = new y3dPool(address(y3d), 0xc778417E063141139Fce010982780140Aa0cD5Ab, 7 days, now + 24 hours);
+
+        
         wethPool.setRewardDistribution(address(this));
         y3d.transfer(address(wethPool), 1000000000000000000000000);
         wethPool.notifyRewardAmount(y3d.balanceOf(address(wethPool)));
