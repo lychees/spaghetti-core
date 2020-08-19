@@ -28,9 +28,7 @@ contract y3dFactory {
     function initWETH() public {
         require(address(wethPool) == address(0), "Already initialized");
 //        wethPool = new y3dPool(address(y3d), 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2, 7 days, now + 24 hours);
-        wethPool = new y3dPool(address(y3d), 0xc778417E063141139Fce010982780140Aa0cD5Ab, 7 days, now + 24 hours);
-
-        
+        wethPool = new y3dPool(address(y3d), 0xc778417E063141139Fce010982780140Aa0cD5Ab, 7 days, now);        
         wethPool.setRewardDistribution(address(this));
         y3d.transfer(address(wethPool), 1000000000000000000000000);
         wethPool.notifyRewardAmount(y3d.balanceOf(address(wethPool)));
@@ -38,14 +36,15 @@ contract y3dFactory {
         wethPool.renounceOwnership();
     }
 
-    function initWBTC() public {
-        require(address(wbtcPool) == address(0), "Already initialized");
-        wbtcPool = new y3dPool(address(y3d), 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599, 7 days, now + 24 hours);
-        wbtcPool.setRewardDistribution(address(this));
-        y3d.transfer(address(wbtcPool), 1000000000000000000000000);
-        wbtcPool.notifyRewardAmount(y3d.balanceOf(address(wbtcPool)));
-        wbtcPool.setRewardDistribution(address(0));
-        wbtcPool.renounceOwnership();
-    }
+    function initUNI() public {
+        require(address(uniswapPool) == address(0), "Already initialized");
+        uniswap = uniswapFactory.createPair(0x5dbcF33D8c2E976c6b560249878e6F1491Bca25c, address(y3d));
+        uniswapPool = new y3dPool(address(y3d), uniswap, 21 days, now);
+        uniswapPool.setRewardDistribution(address(this));
+        y3d.transfer(address(uniswapPool), 7000000000000000000000000);
+        uniswapPool.notifyRewardAmount(y3d.balanceOf(address(uniswapPool)));
+        uniswapPool.setRewardDistribution(address(0));
+        uniswapPool.renounceOwnership();
+    }    
 
 }

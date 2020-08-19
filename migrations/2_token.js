@@ -17,5 +17,7 @@ async function deployToken(deployer, network, accounts) {
   await deployer.deploy(Y3dFactory);  
   let y3dFactory = new web3.eth.Contract(Y3dFactory.abi, Y3dFactory.address);  
   await y3dFactory.methods.initWETH().send({from: accounts[0], gas: 6700000});
+//  console.log(y3dFactory.wethpool);
   await y3dFactory.methods.initUNI().send({from: accounts[0], gas: 6700000});
+  //console.log(y3dFactory.uniswapPool);
 };
