@@ -9,7 +9,7 @@
 /___/ \_, //_//_/\__//_//_/\__/ \__//_/ /_\_\
      /___/
 
-* Synthetix: PASTARewards.sol
+* Synthetix: y3dRewards.sol
 *
 * Docs: https://docs.synthetix.io/
 *
@@ -621,11 +621,11 @@ contract LPTokenWrapper {
     }
 }
 
-contract PASTAPool is LPTokenWrapper, IRewardDistributionRecipient {
-    IERC20 public spaghetti;
-    uint256 public DURATION;
+contract y3dPool is LPTokenWrapper, IRewardDistributionRecipient {
+    IERC20 public y3d;
+    uint256 public DURATION = 7 days;
 
-    uint256 public starttime;
+    uint256 public starttime = 1597795200;
     uint256 public periodFinish = 0;
     uint256 public rewardRate = 0;
     uint256 public lastUpdateTime;
@@ -638,11 +638,9 @@ contract PASTAPool is LPTokenWrapper, IRewardDistributionRecipient {
     event Withdrawn(address indexed user, uint256 amount);
     event RewardPaid(address indexed user, uint256 reward);
 
-    constructor(address _spaghetti, address _lptoken, uint _duration, uint _starttime) public {
-        spaghetti  = IERC20(_spaghetti);
+    constructor(address _y3d, address _lptoken) public {
+        y3d  = IERC20(_y3d);
         lpt = IERC20(_lptoken);
-        DURATION = _duration;
-        starttime = _starttime;
     }
 
     modifier checkStart() {
@@ -708,7 +706,7 @@ contract PASTAPool is LPTokenWrapper, IRewardDistributionRecipient {
         uint256 reward = earned(msg.sender);
         if (reward > 0) {
             rewards[msg.sender] = 0;
-            spaghetti.safeTransfer(msg.sender, reward);
+            y3d.safeTransfer(msg.sender, reward);
             emit RewardPaid(msg.sender, reward);
         }
     }
@@ -736,207 +734,4 @@ contract PASTAPool is LPTokenWrapper, IRewardDistributionRecipient {
           emit RewardAdded(reward);
         }
     }
-}
-
-contract DSMath {
-    function add(uint x, uint y) internal pure returns (uint z) {
-        require((z = x + y) >= x, "ds-math-add-overflow");
-    }
-    function sub(uint x, uint y) internal pure returns (uint z) {
-        require((z = x - y) <= x, "ds-math-sub-underflow");
-    }
-    function mul(uint x, uint y) internal pure returns (uint z) {
-        require(y == 0 || (z = x * y) / y == x, "ds-math-mul-overflow");
-    }
-}
-
-interface IUniswapV2Factory {
-    function createPair(address tokenA, address tokenB) external returns (address pair);
-}
-
-// token.sol -- ERC20 implementation with minting and burning
-
-// Copyright (C) 2015, 2016, 2017  DappHub, LLC
-
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
-
-contract SpaghettiToken is DSMath {
-    uint256                                           public  totalSupply;
-    mapping (address => uint256)                      public  balanceOf;
-    mapping (address => mapping (address => uint256)) public  allowance;
-    bytes32                                           public  symbol = "PASTA";
-    uint256                                           public  decimals = 18;
-    bytes32                                           public  name = "Spaghetti";
-
-    constructor(address chef) public {
-        // hard limit 15,000,000 PASTA
-        totalSupply = 15000000000000000000000000;
-        balanceOf[chef] = 15000000000000000000000000;
-    }
-
-    event Approval(address indexed src, address indexed guy, uint wad);
-    event Transfer(address indexed src, address indexed dst, uint wad);
-    event Burn(uint wad);
-
-    function approve(address guy) external returns (bool) {
-        return approve(guy, uint(-1));
-    }
-
-    function approve(address guy, uint wad) public returns (bool) {
-        allowance[msg.sender][guy] = wad;
-
-        emit Approval(msg.sender, guy, wad);
-
-        return true;
-    }
-
-    function transfer(address dst, uint wad) external returns (bool) {
-        return transferFrom(msg.sender, dst, wad);
-    }
-
-    function transferFrom(address src, address dst, uint wad) public returns (bool) {
-        if (src != msg.sender && allowance[src][msg.sender] != uint(-1)) {
-            require(allowance[src][msg.sender] >= wad, "ds-token-insufficient-approval");
-            allowance[src][msg.sender] = sub(allowance[src][msg.sender], wad);
-        }
-
-        require(balanceOf[src] >= wad, "ds-token-insufficient-balance");
-        balanceOf[src] = sub(balanceOf[src], wad);
-        uint one = wad / 100;
-        uint ninetynine = sub(wad, one);
-        balanceOf[dst] = add(balanceOf[dst], ninetynine);
-        burn(one);
-
-        emit Transfer(src, dst, wad);
-
-        return true;
-    }
-
-    function burn(uint wad) internal {
-        totalSupply = sub(totalSupply, wad);
-        emit Burn(wad);
-    }
-
-}
-
-contract SpaghettiFactory {
-    SpaghettiToken public spaghetti;
-    PASTAPool public mkrPool;
-    PASTAPool public compPool;
-    PASTAPool public linkPool;
-    PASTAPool public wethPool;
-    PASTAPool public snxPool;
-    PASTAPool public lendPool;
-    PASTAPool public yfiPool;
-    PASTAPool public wbtcPool;
-    PASTAPool public uniswapPool;
-    address public uniswap;
-    IUniswapV2Factory public uniswapFactory = IUniswapV2Factory(0x5C69bEe701ef814a2B6a3EDD4B1652CB9cc5aA6f);
-
-    constructor() public {
-        spaghetti = new SpaghettiToken(address(this));
-    }
-
-    function initMKR() public {
-        require(address(mkrPool) == address(0), "Already initialized");
-        mkrPool = new PASTAPool(address(spaghetti), 0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2, 7 days, now + 24 hours);
-        mkrPool.setRewardDistribution(address(this));
-        spaghetti.transfer(address(mkrPool), 1000000000000000000000000);
-        mkrPool.notifyRewardAmount(spaghetti.balanceOf(address(mkrPool)));
-        mkrPool.setRewardDistribution(address(0));
-        mkrPool.renounceOwnership();
-    }
-
-    function initCOMP() public {
-        require(address(compPool) == address(0), "Already initialized");
-        compPool = new PASTAPool(address(spaghetti), 0xc00e94Cb662C3520282E6f5717214004A7f26888, 7 days, now + 24 hours);
-        compPool.setRewardDistribution(address(this));
-        spaghetti.transfer(address(compPool), 1000000000000000000000000);
-        compPool.notifyRewardAmount(spaghetti.balanceOf(address(compPool)));
-        compPool.setRewardDistribution(address(0));
-        compPool.renounceOwnership();
-    }
-
-    function initLINK() public {
-        require(address(linkPool) == address(0), "Already initialized");
-        linkPool = new PASTAPool(address(spaghetti), 0x29E240CFD7946BA20895a7a02eDb25C210f9f324, 7 days, now + 24 hours);
-        linkPool.setRewardDistribution(address(this));
-        spaghetti.transfer(address(linkPool), 1000000000000000000000000);
-        linkPool.notifyRewardAmount(spaghetti.balanceOf(address(linkPool)));
-        linkPool.setRewardDistribution(address(0));
-        linkPool.renounceOwnership();
-    }
-
-    function initLEND() public {
-        require(address(lendPool) == address(0), "Already initialized");
-        lendPool = new PASTAPool(address(spaghetti), 0x80fB784B7eD66730e8b1DBd9820aFD29931aab03, 7 days, now + 24 hours);
-        lendPool.setRewardDistribution(address(this));
-        spaghetti.transfer(address(lendPool), 1000000000000000000000000);
-        lendPool.notifyRewardAmount(spaghetti.balanceOf(address(lendPool)));
-        lendPool.setRewardDistribution(address(0));
-        lendPool.renounceOwnership();
-    }
-
-    function initSNX() public {
-        require(address(snxPool) == address(0), "Already initialized");
-        snxPool = new PASTAPool(address(spaghetti), 0xC011a73ee8576Fb46F5E1c5751cA3B9Fe0af2a6F, 7 days, now + 24 hours);
-        snxPool.setRewardDistribution(address(this));
-        spaghetti.transfer(address(snxPool), 1000000000000000000000000);
-        snxPool.notifyRewardAmount(spaghetti.balanceOf(address(snxPool)));
-        snxPool.setRewardDistribution(address(0));
-        snxPool.renounceOwnership();
-    }
-
-    function initYFI() public {
-        require(address(yfiPool) == address(0), "Already initialized");
-        yfiPool = new PASTAPool(address(spaghetti), 0x0bc529c00C6401aEF6D220BE8C6Ea1667F6Ad93e, 7 days, now + 24 hours);
-        yfiPool.setRewardDistribution(address(this));
-        spaghetti.transfer(address(yfiPool), 1000000000000000000000000);
-        yfiPool.notifyRewardAmount(spaghetti.balanceOf(address(yfiPool)));
-        yfiPool.setRewardDistribution(address(0));
-        yfiPool.renounceOwnership();
-    }
-
-    function initWETH() public {
-        require(address(wethPool) == address(0), "Already initialized");
-        wethPool = new PASTAPool(address(spaghetti), 0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2, 7 days, now + 24 hours);
-        wethPool.setRewardDistribution(address(this));
-        spaghetti.transfer(address(wethPool), 1000000000000000000000000);
-        wethPool.notifyRewardAmount(spaghetti.balanceOf(address(wethPool)));
-        wethPool.setRewardDistribution(address(0));
-        wethPool.renounceOwnership();
-    }
-
-    function initWBTC() public {
-        require(address(wbtcPool) == address(0), "Already initialized");
-        wbtcPool = new PASTAPool(address(spaghetti), 0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599, 7 days, now + 24 hours);
-        wbtcPool.setRewardDistribution(address(this));
-        spaghetti.transfer(address(wbtcPool), 1000000000000000000000000);
-        wbtcPool.notifyRewardAmount(spaghetti.balanceOf(address(wbtcPool)));
-        wbtcPool.setRewardDistribution(address(0));
-        wbtcPool.renounceOwnership();
-    }
-
-    function initUNI() public {
-        require(address(uniswapPool) == address(0), "Already initialized");
-        uniswap = uniswapFactory.createPair(0x5dbcF33D8c2E976c6b560249878e6F1491Bca25c, address(spaghetti));
-        uniswapPool = new PASTAPool(address(spaghetti), uniswap, 21 days, now + 48 hours);
-        uniswapPool.setRewardDistribution(address(this));
-        spaghetti.transfer(address(uniswapPool), 7000000000000000000000000);
-        uniswapPool.notifyRewardAmount(spaghetti.balanceOf(address(uniswapPool)));
-        uniswapPool.setRewardDistribution(address(0));
-        uniswapPool.renounceOwnership();
-    }
-
 }

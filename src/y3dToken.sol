@@ -29,18 +29,18 @@ contract DSMath {
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-contract SpaghettiToken is DSMath {
+contract y3dToken is DSMath {
     uint256                                           public  totalSupply;
     mapping (address => uint256)                      public  balanceOf;
     mapping (address => mapping (address => uint256)) public  allowance;
-    bytes32                                           public  symbol = "PASTA";
+    bytes32                                           public  symbol = "y3d";
     uint256                                           public  decimals = 18;
-    bytes32                                           public  name = "Spaghetti";
+    bytes32                                           public  name = "y3d";
 
     constructor(address chef) public {
-        // hard limit 15,000,000 PASTA
-        totalSupply = 15000000000000000000000000;
-        balanceOf[chef] = 15000000000000000000000000;
+        // hard limit 15,000,000 y3d
+        totalSupply = 16000000000000000000000000;
+        balanceOf[chef] = 16000000000000000000000000;
     }
 
     event Approval(address indexed src, address indexed guy, uint wad);
@@ -71,13 +71,12 @@ contract SpaghettiToken is DSMath {
 
         require(balanceOf[src] >= wad, "ds-token-insufficient-balance");
         balanceOf[src] = sub(balanceOf[src], wad);
-        uint one = wad / 100;
+        uint one = wad / 200;
         uint ninetynine = sub(wad, one);
         balanceOf[dst] = add(balanceOf[dst], ninetynine);
         burn(one);
 
         emit Transfer(src, dst, wad);
-
         return true;
     }
 
@@ -85,5 +84,4 @@ contract SpaghettiToken is DSMath {
         totalSupply = sub(totalSupply, wad);
         emit Burn(wad);
     }
-
 }

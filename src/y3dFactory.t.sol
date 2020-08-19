@@ -2,8 +2,8 @@ pragma solidity ^0.5.12;
 
 import "ds-test/test.sol";
 
-import "./SpaghettiToken.sol";
-import "./PASTAPool.sol";
+import "./y3dToken.sol";
+import "./y3dPool.sol";
 
 interface IUniswapV2Router01 {
     function factory() external pure returns (address);
@@ -107,17 +107,17 @@ contract Hevm {
     function store(address,bytes32,bytes32) public;
 }
 
-contract SpaghettiCoreTest is DSTest {
-    SpaghettiToken token;
-    PASTAPool mkrPool;
-    PASTAPool wbtcPool;
-    PASTAPool compPool;
-    PASTAPool lendPool;
-    PASTAPool snxPool;
-    PASTAPool wethPool;
-    PASTAPool linkPool;
-    PASTAPool yfiPool;
-    PASTAPool uniswapPool;
+contract y3dCoreTest is DSTest {
+    y3dToken token;
+    y3dPool mkrPool;
+    y3dPool wbtcPool;
+    y3dPool compPool;
+    y3dPool lendPool;
+    y3dPool snxPool;
+    y3dPool wethPool;
+    y3dPool linkPool;
+    y3dPool yfiPool;
+    y3dPool uniswapPool;
 
     IERC20 mkr = IERC20(0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2);
     IERC20 wbtc = IERC20(0x2260FAC5E5542a773Aa44fBCfeDf7C193bc2C599);
@@ -140,57 +140,57 @@ contract SpaghettiCoreTest is DSTest {
 
     function setUp() public {
         hevm = Hevm(address(CHEAT_CODE));
-        token = new SpaghettiToken(address(this));
-        mkrPool = new PASTAPool(address(token), address(mkr));
+        token = new y3dToken(address(this));
+        mkrPool = new y3dPool(address(token), address(mkr));
         token.transfer(address(mkrPool), 1000000000000000000000000);
         mkrPool.setRewardDistribution(address(this));
         mkrPool.notifyRewardAmount(990000000000000000000000);
         mkrPool.setRewardDistribution(address(0));
         mkrPool.renounceOwnership();
 
-        wbtcPool = new PASTAPool(address(token), address(wbtc));
+        wbtcPool = new y3dPool(address(token), address(wbtc));
         token.transfer(address(wbtcPool), 1000000000000000000000000);
         wbtcPool.setRewardDistribution(address(this));
         wbtcPool.notifyRewardAmount(990000000000000000000000);
         wbtcPool.setRewardDistribution(address(0));
         wbtcPool.renounceOwnership();
 
-        compPool = new PASTAPool(address(token), address(comp));
+        compPool = new y3dPool(address(token), address(comp));
         token.transfer(address(compPool), 1000000000000000000000000);
         compPool.setRewardDistribution(address(this));
         compPool.notifyRewardAmount(990000000000000000000000);
         compPool.setRewardDistribution(address(0));
         compPool.renounceOwnership();
 
-        lendPool = new PASTAPool(address(token), address(lend));
+        lendPool = new y3dPool(address(token), address(lend));
         token.transfer(address(lendPool), 1000000000000000000000000);
         lendPool.setRewardDistribution(address(this));
         lendPool.notifyRewardAmount(990000000000000000000000);
         lendPool.setRewardDistribution(address(0));
         lendPool.renounceOwnership();
 
-        snxPool = new PASTAPool(address(token), address(snx));
+        snxPool = new y3dPool(address(token), address(snx));
         token.transfer(address(snxPool), 1000000000000000000000000);
         snxPool.setRewardDistribution(address(this));
         snxPool.notifyRewardAmount(990000000000000000000000);
         snxPool.setRewardDistribution(address(0));
         snxPool.renounceOwnership();
 
-        wethPool = new PASTAPool(address(token), address(weth));
+        wethPool = new y3dPool(address(token), address(weth));
         token.transfer(address(wethPool), 1000000000000000000000000);
         wethPool.setRewardDistribution(address(this));
         wethPool.notifyRewardAmount(990000000000000000000000);
         wethPool.setRewardDistribution(address(0));
         wethPool.renounceOwnership();
 
-        linkPool = new PASTAPool(address(token), address(link));
+        linkPool = new y3dPool(address(token), address(link));
         token.transfer(address(linkPool), 1000000000000000000000000);
         linkPool.setRewardDistribution(address(this));
         linkPool.notifyRewardAmount(990000000000000000000000);
         linkPool.setRewardDistribution(address(0));
         linkPool.renounceOwnership();
 
-        yfiPool = new PASTAPool(address(token), address(yfi));
+        yfiPool = new y3dPool(address(token), address(yfi));
         token.transfer(address(yfiPool), 1000000000000000000000000);
         yfiPool.setRewardDistribution(address(this));
         yfiPool.notifyRewardAmount(990000000000000000000000);
@@ -198,7 +198,7 @@ contract SpaghettiCoreTest is DSTest {
         yfiPool.renounceOwnership();
 
         univ2 = uniswapFactory.createPair(0x5dbcF33D8c2E976c6b560249878e6F1491Bca25c, address(token));
-        uniswapPool = new PASTAPool(address(token), univ2);
+        uniswapPool = new y3dPool(address(token), univ2);
         uniswapPool.setRewardDistribution(address(this));
         token.transfer(address(uniswapPool), 7000000000000000000000000);
         uniswapPool.notifyRewardAmount(6930000000000000000000000);
